@@ -1,5 +1,7 @@
 # Kalkulator sprawności kotła na pellet (O₂ / strata kominowa)
 
+https://woodstock4.github.io/kalkulator-sprawnosci-pellet/
+
 Interaktywny kalkulator HTML oraz skrypt w Pythonie do oceny wpływu zawartości tlenu ($\text{O}_2$) w spalinach na **stratę kominową ($q_A$)** i **sprawność spalania** kotła pelletowego.
 
 Projekt powstał do szybkiego porównania pracy kotła przed i po regulacji nadmiaru powietrza (np. przejście z przewietrzonego palnika przy $18\%\ \text{O}_2$ do $11\%\ \text{O}_2$ lub docelowych $7\text{–}9\%\ \text{O}_2$).
