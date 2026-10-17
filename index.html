@@ -1,0 +1,261 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Kalkulator sprawności kotła na pellet – wpływ zawartości O₂ w spalinach</title>
+<style>
+  :root{
+    --bg:#f4f6f8; --card:#ffffff; --ink:#16212b; --muted:#5d6b7a;
+    --line:#dde3ea; --acc:#0f6f5c; --acc2:#0d5b8f; --warn:#b1560f;
+  }
+  *{box-sizing:border-box}
+  body{
+    margin:0; background:var(--bg); color:var(--ink);
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+    line-height:1.5; padding:24px 16px 60px;
+  }
+  .wrap{max-width:920px;margin:0 auto}
+  h1{font-size:1.5rem;line-height:1.25;margin:0 0 6px}
+  .sub{color:var(--muted);font-size:.95rem;margin:0 0 22px}
+  .card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:18px;margin-bottom:18px;
+        box-shadow:0 1px 2px rgba(20,40,60,.05)}
+  h2{font-size:1.05rem;margin:0 0 14px;letter-spacing:.2px}
+  .grid{display:grid;gap:14px}
+  @media(min-width:720px){
+    .grid.two{grid-template-columns:1fr 1fr}
+    .grid.four{grid-template-columns:repeat(4,1fr)}
+  }
+  .case{border:1px solid var(--line);border-radius:12px;padding:14px;background:#fafcfe}
+  .case h3{margin:0 0 10px;font-size:.95rem;text-transform:uppercase;letter-spacing:.6px;color:var(--muted)}
+  .case.a h3{color:#8a4b0f}
+  .case.b h3{color:var(--acc)}
+  label{display:block;font-size:.82rem;color:var(--muted);margin-bottom:4px}
+  input[type=number],select{
+    width:100%;padding:9px 10px;border:1px solid #cfd8e2;border-radius:9px;font-size:1rem;
+    background:#fff;color:var(--ink);font-variant-numeric:tabular-nums
+  }
+  input[type=number]:focus,select:focus{outline:2px solid #bcd9ee;border-color:#7fb3d6}
+  .field{margin-bottom:10px}
+  .field:last-child{margin-bottom:0}
+  .res{margin-top:14px;border-top:1px dashed var(--line);padding-top:12px}
+  .resrow{display:flex;justify-content:space-between;font-size:.92rem;padding:3px 0}
+  .resrow b{font-variant-numeric:tabular-nums}
+  .big{font-size:1.6rem;font-weight:700;font-variant-numeric:tabular-nums;line-height:1.15}
+  .eta-a{color:#a2530d}
+  .eta-b{color:var(--acc)}
+  .delta{display:grid;gap:12px}
+  @media(min-width:720px){.delta{grid-template-columns:repeat(3,1fr)}}
+  .tile{background:#eef6f3;border:1px solid #cfe6de;border-radius:12px;padding:14px;text-align:center}
+  .tile .lbl{font-size:.8rem;color:#3d5e57;letter-spacing:.3px}
+  .tile .val{font-size:1.5rem;font-weight:700;color:var(--acc);font-variant-numeric:tabular-nums;margin-top:4px}
+  .tile.amber{background:#fdf4e9;border-color:#f0dcc0}
+  .tile.amber .lbl{color:#7c5a2e}.tile.amber .val{color:var(--warn)}
+  table{width:100%;border-collapse:collapse;font-size:.88rem;font-variant-numeric:tabular-nums}
+  th,td{text-align:right;padding:7px 8px;border-bottom:1px solid var(--line)}
+  th:first-child,td:first-child{text-align:left}
+  thead th{color:var(--muted);font-weight:600;font-size:.8rem;text-transform:uppercase;letter-spacing:.4px}
+  tr.hi td{background:#eef6f3;font-weight:600}
+  .note{font-size:.85rem;color:var(--muted);margin:12px 0 0}
+  .formula{background:#f2f5f8;border:1px solid var(--line);border-radius:10px;padding:10px 12px;
+           font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;font-size:.85rem;margin:10px 0 0;overflow-x:auto}
+  .tag{display:inline-block;font-size:.72rem;padding:2px 8px;border-radius:999px;background:#e8eef4;color:#42556b;margin-left:8px;vertical-align:middle}
+  ul{margin:8px 0 0;padding-left:20px;font-size:.9rem}
+  li{margin-bottom:5px}
+  .foot{font-size:.8rem;color:var(--muted);text-align:center;margin-top:6px}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <h1>Kalkulator sprawności kotła na pellet</h1>
+  <p class="sub">Ocena wpływu zawartości tlenu w spalinach (nadmiaru powietrza) na sprawność — metoda strat kominowych (wzór Siegerta) + bilans powietrza.</p>
+
+  <div class="card">
+    <h2>1. Dane paliwa i otoczenia</h2>
+    <div class="grid four">
+      <div class="field">
+        <label for="fuel">Paliwo / współczynniki</label>
+        <select id="fuel">
+          <option value="0.65|0">Pellet – drewno suszone (A₁ = 0,65; B = 0)</option>
+          <option value="0.68|0.007">Pellet (A₁ = 0,68; B = 0,007)</option>
+          <option value="0.70|0.007">Drewno / pellet wilgotniejszy (A₁ = 0,70; B = 0,007)</option>
+          <option value="custom">Własne współczynniki</option>
+        </select>
+      </div>
+      <div class="field">
+        <label for="a1">A₁ (współczynnik Siegerta)</label>
+        <input type="number" id="a1" value="0.65" step="0.01" min="0.3" max="1.2">
+      </div>
+      <div class="field">
+        <label for="bb">B (współczynnik Siegerta)</label>
+        <input type="number" id="bb" value="0" step="0.001" min="0" max="0.03">
+      </div>
+      <div class="field">
+        <label for="ta">Temperatura powietrza / otoczenia [°C]</label>
+        <input type="number" id="ta" value="20" step="1" min="-20" max="40">
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <h2>2. Pomiary przed i po regulacji</h2>
+    <div class="grid two">
+      <div class="case a">
+        <h3>Przed regulacją</h3>
+        <div class="field">
+          <label for="o2a">Tlen w spalinach O₂ [%]</label>
+          <input type="number" id="o2a" value="18" step="0.1" min="0.5" max="20">
+        </div>
+        <div class="field">
+          <label for="tga">Temperatura spalin [°C]</label>
+          <input type="number" id="tga" value="180" step="1" min="40" max="400">
+        </div>
+        <div class="res">
+          <div class="resrow"><span>Współczynnik nadmiaru powietrza λ</span><b id="la">–</b></div>
+          <div class="resrow"><span>Strata kominowa q<sub>A</sub></span><b id="qaa">–</b></div>
+          <div class="resrow"><span>Sprawność spalania (100 − q<sub>A</sub>)</span><b id="ea" class="big eta-a">–</b></div>
+        </div>
+      </div>
+      <div class="case b">
+        <h3>Po regulacji</h3>
+        <div class="field">
+          <label for="o2b">Tlen w spalinach O₂ [%]</label>
+          <input type="number" id="o2b" value="11" step="0.1" min="0.5" max="20">
+        </div>
+        <div class="field">
+          <label for="tgb">Temperatura spalin [°C]</label>
+          <input type="number" id="tgb" value="180" step="1" min="40" max="400">
+        </div>
+        <div class="res">
+          <div class="resrow"><span>Współczynnik nadmiaru powietrza λ</span><b id="lb">–</b></div>
+          <div class="resrow"><span>Strata kominowa q<sub>A</sub></span><b id="qab">–</b></div>
+          <div class="resrow"><span>Sprawność spalania (100 − q<sub>A</sub>)</span><b id="eb" class="big eta-b">–</b></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="delta" style="margin-top:16px">
+      <div class="tile"><div class="lbl">Zysk sprawności</div><div class="val" id="dEta">–</div></div>
+      <div class="tile"><div class="lbl">Mniejszy strumień spalin</div><div class="val" id="dV">–</div></div>
+      <div class="tile amber"><div class="lbl">Szacunkowa oszczędność pelletu</div><div class="val" id="dFuel">–</div></div>
+    </div>
+
+    <p class="note">
+      „Zysk sprawności” = różnica sprawności spalania między oboma nastawami. „Oszczędność pelletu” =
+      zysk / sprawność po regulacji — o tyle mniej paliwa potrzeba na tę samą ilość ciepła, przy założeniu
+      takiego samego obciążenia kotła (moc, stan cieplny budynku, temperatura spalin podana powyżej).
+    </p>
+  </div>
+
+  <div class="card">
+    <h2>3. Tabela pomocnicza — strata kominowa w funkcji O₂ i temperatury spalin</h2>
+    <div style="overflow-x:auto">
+      <table id="tab">
+        <thead>
+          <tr><th>O₂ w spalinach</th><th>λ</th><th colspan="6">Sprawność spalania przy temperaturze spalin…</th></tr>
+          <tr><th></th><th></th><th>120 °C</th><th>140 °C</th><th>160 °C</th><th>180 °C</th><th>200 °C</th><th>220 °C</th></tr>
+        </thead>
+        <tbody></tbody>
+      </table>
+    </div>
+    <p class="note">Wiersze 18 % i 11 % wyróżnione. Wartości liczone dla temperatury powietrza podanej w punkcie 1.</p>
+    <div class="formula">q<sub>A</sub> = (t<sub>spalin</sub> − t<sub>otoczenia</sub>) · (A₁ / (21 − O₂) + B) &nbsp;[%]</div>
+  </div>
+
+  <div class="card">
+    <h2>4. Jak to czytać — zastrzeżenia</h2>
+    <ul>
+      <li>Wzór Siegerta to metoda strat kominowych: uwzględnia <b>tylko</b> ciepło uciekające ze spalinami. Sprawność kotła jest o kilka punktów niższa — dochodzą straty: niezupełnego spalania (CO, CH₄), niecałkowitego spalania (niedopał w popiele) i straty do otoczenia (promieniowanie, konwekcja), zwykle razem ok. 3–5 % w kotle 8 kW. Różnica między nastawami jest jednak dobrze oszacowana.</li>
+      <li>Porównuj pomiary wykonane w tych samych warunkach: ta sama moc/obciążenie, stan ustabilizowany, ta sama sonda i punkt pomiaru. O₂ w czasie rozpalania lub na minimalnej mocy nie jest miarodajne.</li>
+      <li>Kluczowa jest też temperatura spalin. Zmniejszenie nadmiaru powietrza zwykle trochę tę temperaturę <i>podnosi</i> — wpisz realne wartości, jeśli je masz.</li>
+      <li>Ze względu na dokładność: O₂ zmierzone „na sucho” przeszacowuje nadmiar powietrza, jeśli w spalinach jest dużo pary wodnej (a przy pellecie jest jej dużo), więc realne λ bywa nieco niższe niż 21/(21−O₂).</li>
+      <li>Nie schodź z O₂ w nieskończoność: przy zbyt małym nadmiarze powietrza rośnie CO i niedopał. Dla kotłów na pellet z sondą λ typowy cel to ok. 7–9 % O₂ przy pełnej mocy (i do ~12 % na mocy minimalnej).</li>
+    </ul>
+  </div>
+
+  <p class="foot">Kalkulator szacunkowy — do oceny kierunku i rzędu wielkości zmian, nie zastępuje pomiaru protokołem z analizatora.</p>
+</div>
+
+<script>
+(function(){
+  var $ = function(id){ return document.getElementById(id); };
+
+  function num(id){
+    var v = parseFloat(($(id).value || '').replace(',', '.'));
+    return isNaN(v) ? 0 : v;
+  }
+  function lambda(o2){ return 21 / (21 - o2); }
+  function qA(o2, tg, ta, a1, b){ return (tg - ta) * (a1 / (21 - o2) + b); }
+  function fmt(v, d){ return v.toFixed(d === undefined ? 1 : d).replace('.', ',') + ' %'; }
+  function f1(v){ return v.toFixed(1).replace('.', ','); }
+
+  // zmiana paliwa wypełnia współczynniki
+  $('fuel').addEventListener('change', function(){
+    var v = this.value;
+    if (v === 'custom') return;
+    var p = v.split('|');
+    $('a1').value = p[0];
+    $('bb').value = p[1];
+    calc();
+  });
+  ['a1','bb'].forEach(function(id){
+    $(id).addEventListener('input', function(){ $('fuel').value = 'custom'; });
+  });
+
+  function calc(){
+    var ta = num('ta'), a1 = num('a1'), b = num('bb');
+
+    [['a','o2a','tga'],['b','o2b','tgb']].forEach(function(c){
+      var o2 = num(c[1]), tg = num(c[2]);
+      var l = lambda(o2), q = qA(o2, tg, ta, a1, b);
+      $(c[0] === 'a' ? 'la' : 'lb').textContent = (isFinite(l) ? l.toFixed(2).replace('.', ',') : '–');
+      $(c[0] === 'a' ? 'qaa' : 'qab').textContent = fmt(q);
+      var e = 100 - q;
+      $(c[0] === 'a' ? 'ea' : 'eb').textContent = fmt(e);
+      c.e = e;
+      c.l = l;
+      c.q = q;
+    });
+
+    var ea = 100 - qA(num('o2a'), num('tga'), ta, a1, b);
+    var eb = 100 - qA(num('o2b'), num('tgb'), ta, a1, b);
+
+    var dEta = eb - ea;
+    $('dEta').textContent = (dEta >= 0 ? '+' : '') + f1(dEta) + ' p.p.';
+
+    var la = lambda(num('o2a')), lb = lambda(num('o2b'));
+    var dV = la > 0 ? (1 - lb / la) * 100 : 0;
+    $('dV').textContent = (dV >= 0 ? '−' : '+') + f1(Math.abs(dV)) + ' %';
+
+    var save = eb > 0 ? dEta / eb * 100 : 0;
+    $('dFuel').textContent = (save >= 0 ? '−' : '+') + f1(Math.abs(save)) + ' %';
+
+    // tabela
+    var temps = [120,140,160,180,200,220];
+    var rows = [18, 15, 13, 11, 9, 7];
+    var tb = $('tab').getElementsByTagName('tbody')[0];
+    tb.innerHTML = '';
+    rows.forEach(function(o2){
+      var tr = document.createElement('tr');
+      if (o2 === 18 || o2 === 11) tr.className = 'hi';
+      var html = '<td>' + o2 + ' %</td><td>' + lambda(o2).toFixed(2).replace('.', ',') + '</td>';
+      temps.forEach(function(tg){
+        var e = 100 - qA(o2, tg, ta, a1, b);
+        html += '<td>' + f1(e) + '</td>';
+      });
+      tr.innerHTML = html;
+      tb.appendChild(tr);
+    });
+  }
+
+  ['o2a','tga','o2b','tgb','ta','a1','bb'].forEach(function(id){
+    $(id).addEventListener('input', calc);
+    $(id).addEventListener('change', calc);
+  });
+
+  calc();
+})();
+</script>
+</body>
+</html>
